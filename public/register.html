@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>ลงทะเบียนห้อง — เฝ้าไฟ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+<style>
+  body { display: flex; align-items: center; justify-content: center; padding: 20px; min-height: 100vh; }
+  .reg-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+  }
+  .reg-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: conic-gradient(from 220deg, var(--amber), var(--red), var(--amber));
+    box-shadow: 0 0 18px rgba(245, 166, 35, 0.45);
+    margin: 0 auto 16px;
+  }
+  .reg-card h1 { font-size: 18px; margin: 0 0 4px; }
+  .reg-card .sub { font-size: 13px; color: var(--text-dim); margin: 0 0 20px; }
+  .profile-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; margin-bottom: 18px; text-align: left;
+  }
+  .profile-row img { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
+  .profile-row .name { font-size: 13px; font-weight: 600; }
+  .profile-row .label { font-size: 11px; color: var(--text-dim); }
+  .reg-card label {
+    display: flex; flex-direction: column; gap: 6px; text-align: left;
+    font-size: 13px; color: var(--text-dim); margin-bottom: 16px;
+  }
+  .reg-card input {
+    font-family: var(--font-body); background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 14px; color: var(--text); font-size: 18px;
+    text-align: center; letter-spacing: 0.05em;
+  }
+  .reg-card input:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
+  .reg-card .btn { width: 100%; padding: 13px; font-size: 15px; }
+  .state-message { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+  .state-message.error { color: var(--red); }
+  .state-message.success { color: var(--green); }
+  .success-icon { font-size: 40px; margin-bottom: 10px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="reg-card">
+  <div class="reg-icon" aria-hidden="true"></div>
+
+  <!-- กำลังโหลด -->
+  <div id="loadingState">
+    <h1>กำลังเชื่อมต่อ LINE…</h1>
+    <p class="sub state-message">กรุณารอสักครู่</p>
+  </div>
+
+  <!-- ฟอร์มลงทะเบียน -->
+  <div id="formState" class="hidden">
+    <h1>ลงทะเบียนห้อง</h1>
+    <p class="sub">ผูกบัญชี LINE นี้กับห้องของคุณ เพื่อรับการแจ้งเตือนหากเปิดไฟทิ้งไว้</p>
+
+    <div class="profile-row">
+      <img id="profilePic" src="" alt="" />
+      <div>
+        <div class="label">เข้าสู่ระบบด้วย LINE แล้ว</div>
+        <div class="name" id="profileName"></div>
+      </div>
+    </div>
+
+    <form id="registerForm">
+      <label>รหัสห้องของคุณ
+        <input type="text" id="codeInput" placeholder="เช่น 101" required autocomplete="off" />
+      </label>
+      <p class="sub state-message" id="formError"></p>
+      <button type="submit" class="btn btn-primary">ยืนยันการลงทะเบียน</button>
+    </form>
+  </div>
+
+  <!-- สำเร็จ -->
+  <div id="successState" class="hidden">
+    <div class="success-icon">✅</div>
+    <h1>ลงทะเบียนสำเร็จ</h1>
+    <p class="sub state-message success" id="successMessage"></p>
+  </div>
+
+  <!-- เกิดข้อผิดพลาดร้ายแรง (เช่น LIFF ตั้งค่าไม่สมบูรณ์) -->
+  <div id="fatalErrorState" class="hidden">
+    <h1>ไม่สามารถเปิดหน้าลงทะเบียนได้</h1>
+    <p class="sub state-message error" id="fatalErrorMessage"></p>
+  </div>
+</div>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script src="register.js"></script>
+</body>
+</html>

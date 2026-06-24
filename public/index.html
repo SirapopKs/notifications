@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>เฝ้าไฟ — ระบบแจ้งเตือนไฟเปิดทิ้งไว้</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <div>
+      <h1>เฝ้าไฟ</h1>
+      <p class="brand-sub">ระบบแจ้งเตือนไฟเปิดทิ้งไว้ในห้อง</p>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <span id="liveCounter" class="live-counter">0 ห้องกำลังเปิดไฟ</span>
+    <button id="openSettingsBtn" class="btn btn-ghost">ตั้งค่า</button>
+    <button id="openAddRoomBtn" class="btn btn-primary">+ เพิ่มห้อง</button>
+  </div>
+</header>
+
+<main class="content">
+  <div id="emptyState" class="empty-state hidden">
+    <p>ยังไม่มีห้องในระบบ</p>
+    <button class="btn btn-primary" onclick="document.getElementById('openAddRoomBtn').click()">เพิ่มห้องแรก</button>
+  </div>
+  <div id="roomGrid" class="room-grid"></div>
+</main>
+
+<!-- Modal: เพิ่ม/แก้ไขห้อง -->
+<div id="roomModal" class="modal-backdrop hidden">
+  <div class="modal">
+    <h2 id="roomModalTitle">เพิ่มห้องใหม่</h2>
+    <form id="roomForm">
+      <input type="hidden" id="roomId" />
+      <label>ชื่อห้อง
+        <input type="text" id="roomName" placeholder="เช่น ห้อง 101" required />
+      </label>
+      <label>รหัสห้อง (ลูกค้าใช้กรอกตอนลงทะเบียน)
+        <input type="text" id="roomCode" placeholder="เช่น 101" required />
+      </label>
+      <label>ชื่อลูกค้า
+        <input type="text" id="roomCustomer" placeholder="เช่น คุณสมชาย" />
+      </label>
+      <label>LINE userId ของลูกค้า
+        <input type="text" id="roomLineId" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
+      </label>
+      <p class="hint">ปกติไม่ต้องกรอกช่องนี้เอง — ให้ลูกค้าลงทะเบียนผ่านหน้า LINE ด้วยรหัสห้องด้านบนแทน ระบบจะเติมให้อัตโนมัติ</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="cancelRoomBtn">ยกเลิก</button>
+        <button type="submit" class="btn btn-primary">บันทึก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: ตั้งค่า -->
+<div id="settingsModal" class="modal-backdrop hidden">
+  <div class="modal modal-wide">
+    <h2>ตั้งค่าระบบ</h2>
+    <form id="settingsForm">
+      <label>LINE Channel Access Token
+        <input type="password" id="lineToken" placeholder="ใส่ token จาก LINE Developers Console" />
+      </label>
+      <p class="hint" id="tokenStatus"></p>
+
+      <label>LIFF ID (สำหรับหน้าลงทะเบียนลูกค้า)
+        <input type="text" id="liffId" placeholder="เช่น 1234567890-abcdefgh" />
+      </label>
+      <p class="hint">ได้จาก LINE Developers Console &gt; channel ของคุณ &gt; แท็บ LIFF &gt; Add LIFF app
+        (ตั้ง Endpoint URL เป็น URL ของหน้านี้ + <code>/register.html</code>)</p>
+
+      <div class="settings-row">
+        <label>แจ้งเตือนเมื่อเปิดไฟนานเกิน (นาที)
+          <input type="number" id="thresholdMinutes" min="1" />
+        </label>
+        <label>แจ้งซ้ำทุก (นาที)
+          <input type="number" id="renotifyMinutes" min="1" />
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="cancelSettingsBtn">ปิด</button>
+        <button type="submit" class="btn btn-primary">บันทึกการตั้งค่า</button>
+      </div>
+    </form>
+
+    <hr />
+
+    <h3>ลิงก์ลงทะเบียนสำหรับลูกค้า</h3>
+    <p class="hint" id="registerLinkInfo">กรอก LIFF ID แล้วบันทึกก่อน จึงจะสร้างลิงก์ลงทะเบียนให้แต่ละห้องได้ (ดูปุ่ม 🔗 ที่การ์ดห้องแต่ละห้อง)</p>
+
+    <hr />
+
+    <h3>ผู้ทักแชทล่าสุด</h3>
+    <p class="hint">เมื่อลูกค้าทักแชทเข้า LINE OA ของคุณ ระบบจะบันทึก userId ไว้ที่นี่ ใช้คัดลอกไปกรอกตอนเพิ่ม/แก้ไขห้อง</p>
+    <div id="registrationsList" class="registrations-list"></div>
+  </div>
+</div>
+
+<template id="roomCardTemplate">
+  <article class="room-card">
+    <div class="ring-wrap">
+      <svg class="ring" viewBox="0 0 120 120">
+        <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+        <circle class="ring-progress" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <div class="ring-center">
+        <span class="status-dot"></span>
+        <span class="timer">00:00:00</span>
+      </div>
+    </div>
+    <div class="room-info">
+      <h3 class="room-name"></h3>
+      <p class="room-customer"></p>
+      <p class="room-meta last-notified"></p>
+      <p class="room-meta reg-status"></p>
+    </div>
+    <div class="room-actions">
+      <button class="btn btn-toggle">เปิดไฟ</button>
+      <button class="icon-btn link-btn" title="คัดลอกลิงก์ลงทะเบียน" aria-label="คัดลอกลิงก์ลงทะเบียน">🔗</button>
+      <button class="icon-btn edit-btn" title="แก้ไข" aria-label="แก้ไข">✎</button>
+      <button class="icon-btn delete-btn" title="ลบ" aria-label="ลบ">✕</button>
+    </div>
+  </article>
+</template>
+
+<script src="app.js"></script>
+</body>
+</html>
