@@ -53,6 +53,58 @@
   .step-label { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
   .no-roster-hint { font-size: 12px; color: var(--text-dim); margin-bottom: 14px; line-height: 1.5; }
   .btn-link { background: none; border: none; color: var(--amber); font-size: 13px; cursor: pointer; font-family: var(--font-body); text-decoration: underline; padding: 0; margin-top: 10px; display: block; width: 100%; text-align: center; }
+
+  .name-info-row {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .name-info-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .name-info-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    white-space: nowrap;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 7px;
+  }
+  .name-info-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .name-input-label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin: 0 !important;
+  }
+  .name-input-label input {
+    font-family: var(--font-body);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 15px;
+    width: 100%;
+    text-align: left;
+    letter-spacing: normal;
+  }
+  .name-input-label input:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
 </style>
 </head>
 <body>
@@ -110,6 +162,17 @@
   <div id="dutyState" class="hidden">
     <h1 id="dutyStateTitle">เลือกเวรของคุณ</h1>
     <p class="sub" id="dutyStateSub"></p>
+
+    <!-- แสดง LINE name + ช่องกรอกชื่อจริง -->
+    <div class="name-info-row">
+      <div class="name-info-line">
+        <span class="name-info-label">ชื่อ LINE</span>
+        <span class="name-info-value" id="dutyLineDisplayName"></span>
+      </div>
+      <label class="name-input-label">ชื่อ-นามสกุล (สำหรับแสดงในระบบ)
+        <input type="text" id="fullNameInput" placeholder="เช่น สมชาย ใจดี" autocomplete="name" />
+      </label>
+    </div>
 
     <!-- เลือกจาก roster (กรณีมีรายชื่อในระบบ) -->
     <div id="rosterPicker" class="hidden">

@@ -86,6 +86,11 @@ function prepareStep3() {
   selectedDays = new Set();
   useManualDays = false;
 
+  // แสดงชื่อ LINE และเติม placeholder ช่องชื่อจริง
+  document.getElementById('dutyLineDisplayName').textContent = lineProfile.displayName || '';
+  const fullNameInput = document.getElementById('fullNameInput');
+  if (!fullNameInput.value) fullNameInput.value = lineProfile.displayName || '';
+
   const rosterPicker = document.getElementById('rosterPicker');
   const dayPicker = document.getElementById('dayPicker');
   const dutyStateTitle = document.getElementById('dutyStateTitle');
@@ -173,6 +178,12 @@ document.getElementById('dutySubmitBtn').addEventListener('click', async () => {
   const errEl = document.getElementById('dutyError');
   errEl.textContent = '';
 
+  const fullName = document.getElementById('fullNameInput').value.trim();
+  if (!fullName) {
+    errEl.textContent = 'กรุณากรอกชื่อ-นามสกุลก่อน';
+    return;
+  }
+
   // validation
   const dayPickerVisible = !document.getElementById('dayPicker').classList.contains('hidden');
   if (dayPickerVisible && selectedDays.size === 0 && !selectedEntryId) {
@@ -188,7 +199,7 @@ document.getElementById('dutySubmitBtn').addEventListener('click', async () => {
     const payload = {
       code: selectedRoom.code,
       lineUserId: lineProfile.userId,
-      displayName: lineProfile.displayName,
+      displayName: fullName,   // ใช้ชื่อที่กรอกเอง แทน LINE display name
       role: selectedRole,
     };
     if (selectedEntryId) {
