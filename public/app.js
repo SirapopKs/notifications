@@ -180,8 +180,9 @@ function renderDutyDay() {
     const statusBadge = entry.lineUserId
       ? `<span class="duty-badge duty-badge-ok">ลงทะเบียนแล้ว</span>`
       : `<span class="duty-badge duty-badge-no">ยังไม่ลงทะเบียน</span>`;
-    const lineNameSuffix = entry.lineDisplayName && entry.lineDisplayName !== entry.name
-      ? ` <span class="duty-line-name">(${entry.lineDisplayName})</span>` : '';
+    const lineName = entry.lineDisplayName || entry.displayName || '';
+    const lineNameSuffix = lineName
+      ? ` <span class="duty-line-name">(${lineName})</span>` : '';
     row.innerHTML = `
       <div class="duty-row-info">
         <span class="duty-name">${entry.name}${lineNameSuffix}</span>
