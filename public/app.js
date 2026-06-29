@@ -1,6 +1,18 @@
-const RING_CIRCUMFERENCE = 2 * Math.PI * 52; // ~326.7, ตรงกับ r=52 ใน SVG
+const RING_CIRCUMFERENCE = 2 * Math.PI * 52;
+
+const DAY_LABELS = {
+  monday: 'จันทร์',
+  tuesday: 'อังคาร',
+  wednesday: 'พุธ',
+  thursday: 'พฤหัสบดี',
+  friday: 'ศุกร์',
+};
+const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
 
 let settingsCache = { thresholdMinutes: 30, renotifyMinutes: 30 };
+let dutyCurrentDay = 'monday';
+let dutyCurrentRoomId = null;
+let dutyRoster = [];
 
 const roomGrid = document.getElementById('roomGrid');
 const emptyState = document.getElementById('emptyState');
@@ -29,7 +41,7 @@ function ringColor(ratio) {
   return 'var(--green)';
 }
 
-// ---------- render ----------
+// ---------- render rooms ----------
 function renderRooms(rooms) {
   const onCount = rooms.filter((r) => r.status === 'on').length;
   liveCounter.textContent = `${onCount} ห้องกำลังเปิดไฟ`;
@@ -46,16 +58,17 @@ function renderRooms(rooms) {
     node.querySelector('.room-name').textContent = room.name;
     node.querySelector('.room-customer').textContent = room.customerName || 'ยังไม่ระบุลูกค้า';
     node.querySelector('.room-meta.last-notified').textContent = room.status === 'on' ? (timeAgoLabel(room.lastNotifiedAt) || 'ยังไม่เคยแจ้งเตือน') : '';
-    node.querySelector('.room-meta.reg-status').textContent = room.lineUserId
-      ? '✅ ผูก LINE แล้ว'
-      : `รหัสห้อง: ${room.code} (ยังไม่ลงทะเบียน)`;
+
+    const dutyCount = (room.dutyRoster || []).length;
+    const regCount = (room.dutyRoster || []).filter((e) => e.lineUserId).length;
+    node.querySelector('.room-meta.reg-status').textContent = dutyCount > 0
+      ? `เวร ${dutyCount} คน (ผูก LINE แล้ว ${regCount} คน)`
+      : room.lineUserId ? '✅ ผูก LINE แล้ว' : `รหัสห้อง: ${room.code} (ยังไม่ลงทะเบียน)`;
 
     const timerEl = node.querySelector('.timer');
     timerEl.textContent = room.status === 'on' ? formatHMS(room.secondsOn) : '--:--:--';
 
-    const ratio = settingsCache.thresholdMinutes
-      ? Math.min((room.minutesOn || 0) / settingsCache.thresholdMinutes, 1)
-      : 0;
+    const ratio = settingsCache.thresholdMinutes ? Math.min((room.minutesOn || 0) / settingsCache.thresholdMinutes, 1) : 0;
     const progressEl = node.querySelector('.ring-progress');
     if (room.status === 'on') {
       progressEl.style.stroke = ringColor(ratio);
@@ -73,6 +86,7 @@ function renderRooms(rooms) {
     node.querySelector('.edit-btn').addEventListener('click', () => openRoomModal(room));
     node.querySelector('.delete-btn').addEventListener('click', () => deleteRoom(room.id, room.name));
     node.querySelector('.link-btn').addEventListener('click', (e) => copyRegisterLink(room, e.currentTarget));
+    node.querySelector('.duty-btn').addEventListener('click', () => openDutyModal(room));
 
     roomGrid.appendChild(node);
   }
@@ -112,6 +126,104 @@ async function copyRegisterLink(room, btn) {
   btn.textContent = '✓';
   setTimeout(() => { btn.textContent = original; }, 1500);
 }
+
+// ---------- duty modal ----------
+const dutyModal = document.getElementById('dutyModal');
+const dutyAddForm = document.getElementById('dutyAddForm');
+
+async function openDutyModal(room) {
+  dutyCurrentRoomId = room.id;
+  dutyCurrentDay = 'monday';
+  document.getElementById('dutyRoomId').value = room.id;
+  document.getElementById('dutyAddDay').value = 'monday';
+  document.getElementById('dutyModalTitle').textContent = `เวรประจำวัน — ${room.name}`;
+
+  document.querySelectorAll('.duty-tab').forEach((tab) => {
+    tab.classList.toggle('active', tab.dataset.day === 'monday');
+  });
+
+  await loadDutyRoster(room.id);
+  dutyModal.classList.remove('hidden');
+}
+
+function closeDutyModal() {
+  dutyModal.classList.add('hidden');
+  dutyCurrentRoomId = null;
+  dutyRoster = [];
+  refresh();
+}
+
+async function loadDutyRoster(roomId) {
+  try {
+    const res = await fetch(`/api/rooms/${roomId}/duty`);
+    dutyRoster = await res.json();
+    renderDutyDay();
+  } catch (err) {
+    console.error('โหลดเวรไม่สำเร็จ', err);
+  }
+}
+
+function renderDutyDay() {
+  const content = document.getElementById('dutyDayContent');
+  const dayEntries = dutyRoster.filter((e) => e.day === dutyCurrentDay);
+
+  if (dayEntries.length === 0) {
+    content.innerHTML = '<p class="duty-empty">ยังไม่มีรายชื่อเวรสำหรับวันนี้</p>';
+    return;
+  }
+
+  content.innerHTML = '';
+  for (const entry of dayEntries) {
+    const row = document.createElement('div');
+    row.className = 'duty-row';
+    const roleLabel = entry.role === 'teacher' ? 'ครู' : entry.role === 'student' ? 'นักเรียน' : '—';
+    const statusBadge = entry.lineUserId
+      ? `<span class="duty-badge duty-badge-ok">ลงทะเบียนแล้ว</span>`
+      : `<span class="duty-badge duty-badge-no">ยังไม่ลงทะเบียน</span>`;
+    row.innerHTML = `
+      <div class="duty-row-info">
+        <span class="duty-name">${entry.name}</span>
+        <span class="duty-role">${roleLabel}</span>
+        ${statusBadge}
+      </div>
+      <button class="icon-btn duty-delete-btn" data-id="${entry.id}" title="ลบ" aria-label="ลบ">✕</button>
+    `;
+    row.querySelector('.duty-delete-btn').addEventListener('click', () => deleteDutyEntry(entry.id));
+    content.appendChild(row);
+  }
+}
+
+async function deleteDutyEntry(entryId) {
+  if (!dutyCurrentRoomId) return;
+  await fetch(`/api/rooms/${dutyCurrentRoomId}/duty/${entryId}`, { method: 'DELETE' });
+  await loadDutyRoster(dutyCurrentRoomId);
+}
+
+document.querySelectorAll('.duty-tab').forEach((tab) => {
+  tab.addEventListener('click', () => {
+    dutyCurrentDay = tab.dataset.day;
+    document.getElementById('dutyAddDay').value = dutyCurrentDay;
+    document.querySelectorAll('.duty-tab').forEach((t) => t.classList.toggle('active', t === tab));
+    renderDutyDay();
+  });
+});
+
+dutyAddForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name = document.getElementById('dutyAddName').value.trim();
+  const day = document.getElementById('dutyAddDay').value;
+  if (!name) return;
+  await fetch(`/api/rooms/${dutyCurrentRoomId}/duty`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, day }),
+  });
+  document.getElementById('dutyAddName').value = '';
+  await loadDutyRoster(dutyCurrentRoomId);
+});
+
+document.getElementById('closeDutyBtn').addEventListener('click', closeDutyModal);
+dutyModal.addEventListener('click', (e) => { if (e.target === dutyModal) closeDutyModal(); });
 
 // ---------- room modal ----------
 const roomModal = document.getElementById('roomModal');
@@ -173,8 +285,8 @@ async function openSettingsModal() {
     ? 'มีการตั้งค่า token ไว้แล้ว (เว้นว่างไว้หากไม่ต้องการเปลี่ยน)'
     : 'ยังไม่ได้ตั้งค่า token — จะยังไม่มีการส่งข้อความ LINE จริงจนกว่าจะกรอก';
   document.getElementById('registerLinkInfo').textContent = data.liffId
-    ? 'ตั้งค่า LIFF ID แล้ว — กดปุ่ม 🔗 ที่การ์ดห้องแต่ละห้องเพื่อคัดลอกลิงก์ลงทะเบียนของห้องนั้น'
-    : 'กรอก LIFF ID แล้วบันทึกก่อน จึงจะสร้างลิงก์ลงทะเบียนให้แต่ละห้องได้ (ดูปุ่ม 🔗 ที่การ์ดห้องแต่ละห้อง)';
+    ? 'ตั้งค่า LIFF ID แล้ว — กดปุ่ม 🔗 ที่การ์ดห้องแต่ละห้องเพื่อคัดลอกลิงก์ลงทะเบียน'
+    : 'กรอก LIFF ID แล้วบันทึกก่อน จึงจะสร้างลิงก์ลงทะเบียนให้แต่ละห้องได้';
   await loadRegistrations();
   settingsModal.classList.remove('hidden');
 }

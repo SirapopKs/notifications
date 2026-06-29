@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-<title>ลงทะเบียนห้อง — เฝ้าไฟ</title>
+<title>ลงทะเบียนเวร — LightNoti</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -16,8 +16,7 @@
     border-radius: 16px;
     padding: 28px 24px;
     width: 100%;
-    max-width: 360px;
-    text-align: center;
+    max-width: 380px;
   }
   .reg-icon {
     width: 56px; height: 56px; border-radius: 14px;
@@ -25,32 +24,35 @@
     box-shadow: 0 0 18px rgba(245, 166, 35, 0.45);
     margin: 0 auto 16px;
   }
-  .reg-card h1 { font-size: 18px; margin: 0 0 4px; }
-  .reg-card .sub { font-size: 13px; color: var(--text-dim); margin: 0 0 20px; }
+  .reg-card h1 { font-size: 18px; margin: 0 0 4px; text-align: center; }
+  .reg-card .sub { font-size: 13px; color: var(--text-dim); margin: 0 0 20px; text-align: center; line-height: 1.5; }
   .profile-row {
     display: flex; align-items: center; gap: 10px;
     background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
-    padding: 10px 12px; margin-bottom: 18px; text-align: left;
+    padding: 10px 12px; margin-bottom: 18px;
   }
   .profile-row img { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
   .profile-row .name { font-size: 13px; font-weight: 600; }
   .profile-row .label { font-size: 11px; color: var(--text-dim); }
   .reg-card label {
-    display: flex; flex-direction: column; gap: 6px; text-align: left;
+    display: flex; flex-direction: column; gap: 6px;
     font-size: 13px; color: var(--text-dim); margin-bottom: 16px;
   }
-  .reg-card input {
+  .reg-card input[type="text"] {
     font-family: var(--font-body); background: var(--bg); border: 1px solid var(--border);
     border-radius: 8px; padding: 12px 14px; color: var(--text); font-size: 18px;
-    text-align: center; letter-spacing: 0.05em;
+    text-align: center; letter-spacing: 0.05em; width: 100%;
   }
-  .reg-card input:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
-  .reg-card .btn { width: 100%; padding: 13px; font-size: 15px; }
-  .state-message { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+  .reg-card input[type="text"]:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
+  .reg-card .btn { width: 100%; padding: 13px; font-size: 15px; margin-top: 4px; }
+  .state-message { font-size: 13px; color: var(--text-dim); line-height: 1.6; text-align: center; }
   .state-message.error { color: var(--red); }
   .state-message.success { color: var(--green); }
-  .success-icon { font-size: 40px; margin-bottom: 10px; }
+  .success-icon { font-size: 40px; margin-bottom: 10px; text-align: center; }
   .hidden { display: none !important; }
+  .step-label { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; }
+  .no-roster-hint { font-size: 12px; color: var(--text-dim); margin-bottom: 14px; line-height: 1.5; }
+  .btn-link { background: none; border: none; color: var(--amber); font-size: 13px; cursor: pointer; font-family: var(--font-body); text-decoration: underline; padding: 0; margin-top: 10px; display: block; width: 100%; text-align: center; }
 </style>
 </head>
 <body>
@@ -64,11 +66,10 @@
     <p class="sub state-message">กรุณารอสักครู่</p>
   </div>
 
-  <!-- ฟอร์มลงทะเบียน -->
-  <div id="formState" class="hidden">
-    <h1>ลงทะเบียนห้อง</h1>
-    <p class="sub">ผูกบัญชี LINE นี้กับห้องของคุณ เพื่อรับการแจ้งเตือนหากเปิดไฟทิ้งไว้</p>
-
+  <!-- ขั้นที่ 1: กรอกรหัสห้อง -->
+  <div id="codeState" class="hidden">
+    <h1>ลงทะเบียนเวร</h1>
+    <p class="sub">กรอกรหัสห้องเพื่อลงทะเบียนรับการแจ้งเตือน</p>
     <div class="profile-row">
       <img id="profilePic" src="" alt="" />
       <div>
@@ -76,14 +77,62 @@
         <div class="name" id="profileName"></div>
       </div>
     </div>
-
-    <form id="registerForm">
+    <form id="codeForm">
       <label>รหัสห้องของคุณ
         <input type="text" id="codeInput" placeholder="เช่น 101" required autocomplete="off" />
       </label>
-      <p class="sub state-message" id="formError"></p>
-      <button type="submit" class="btn btn-primary">ยืนยันการลงทะเบียน</button>
+      <p class="state-message error" id="codeError"></p>
+      <button type="submit" class="btn btn-primary">ถัดไป →</button>
     </form>
+  </div>
+
+  <!-- ขั้นที่ 2: เลือก role -->
+  <div id="roleState" class="hidden">
+    <h1>คุณเป็นใคร?</h1>
+    <p class="sub">เลือกประเภทของคุณเพื่อปรับการแจ้งเตือนให้เหมาะสม</p>
+    <p class="step-label">เลือกประเภท</p>
+    <div class="role-select">
+      <button type="button" class="role-btn" id="roleTeacher" data-role="teacher">
+        <span class="role-icon">👩‍🏫</span>
+        ครู
+      </button>
+      <button type="button" class="role-btn" id="roleStudent" data-role="student">
+        <span class="role-icon">🎒</span>
+        นักเรียน
+      </button>
+    </div>
+    <p class="state-message error" id="roleError"></p>
+    <button type="button" class="btn btn-primary" id="roleNextBtn">ถัดไป →</button>
+    <button type="button" class="btn-link" id="roleBackBtn">← ย้อนกลับ</button>
+  </div>
+
+  <!-- ขั้นที่ 3: เลือกชื่อจาก roster หรือเลือกวัน -->
+  <div id="dutyState" class="hidden">
+    <h1 id="dutyStateTitle">เลือกเวรของคุณ</h1>
+    <p class="sub" id="dutyStateSub"></p>
+
+    <!-- เลือกจาก roster (กรณีมีรายชื่อในระบบ) -->
+    <div id="rosterPicker" class="hidden">
+      <p class="step-label">เลือกชื่อของคุณ</p>
+      <div class="duty-pick-list" id="rosterList"></div>
+      <button type="button" class="btn-link" id="switchToManualBtn">ชื่อของฉันไม่อยู่ในรายการ</button>
+    </div>
+
+    <!-- เลือกวันเอง -->
+    <div id="dayPicker" class="hidden">
+      <p class="step-label">เลือกวันที่อยู่เวร (เลือกได้หลายวัน)</p>
+      <div class="day-grid">
+        <button type="button" class="day-btn" data-day="monday">จันทร์</button>
+        <button type="button" class="day-btn" data-day="tuesday">อังคาร</button>
+        <button type="button" class="day-btn" data-day="wednesday">พุธ</button>
+        <button type="button" class="day-btn" data-day="thursday">พฤหัสฯ</button>
+        <button type="button" class="day-btn" data-day="friday">ศุกร์</button>
+      </div>
+    </div>
+
+    <p class="state-message error" id="dutyError"></p>
+    <button type="button" class="btn btn-primary" id="dutySubmitBtn">ยืนยันการลงทะเบียน</button>
+    <button type="button" class="btn-link" id="dutyBackBtn">← ย้อนกลับ</button>
   </div>
 
   <!-- สำเร็จ -->
@@ -93,9 +142,9 @@
     <p class="sub state-message success" id="successMessage"></p>
   </div>
 
-  <!-- เกิดข้อผิดพลาดร้ายแรง (เช่น LIFF ตั้งค่าไม่สมบูรณ์) -->
+  <!-- เกิดข้อผิดพลาดร้ายแรง -->
   <div id="fatalErrorState" class="hidden">
-    <h1>ไม่สามารถเปิดหน้าลงทะเบียนได้</h1>
+    <h1>ไม่สามารถเปิดได้</h1>
     <p class="sub state-message error" id="fatalErrorMessage"></p>
   </div>
 </div>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>เฝ้าไฟ — ระบบแจ้งเตือนไฟเปิดทิ้งไว้</title>
+<title>LightNoti — ระบบแจ้งเตือนไฟเปิดทิ้งไว้</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
@@ -15,7 +15,7 @@
   <div class="brand">
     <span class="brand-mark" aria-hidden="true"></span>
     <div>
-      <h1>เฝ้าไฟ</h1>
+      <h1>LightNoti</h1>
       <p class="brand-sub">ระบบแจ้งเตือนไฟเปิดทิ้งไว้ในห้อง</p>
     </div>
   </div>
@@ -52,12 +52,43 @@
       <label>LINE userId ของลูกค้า
         <input type="text" id="roomLineId" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
       </label>
-      <p class="hint">ปกติไม่ต้องกรอกช่องนี้เอง — ให้ลูกค้าลงทะเบียนผ่านหน้า LINE ด้วยรหัสห้องด้านบนแทน ระบบจะเติมให้อัตโนมัติ</p>
+      <p class="hint">ปกติไม่ต้องกรอกช่องนี้เอง — ให้ลูกค้าลงทะเบียนผ่านหน้า LINE ด้วยรหัสห้องด้านบนแทน</p>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" id="cancelRoomBtn">ยกเลิก</button>
         <button type="submit" class="btn btn-primary">บันทึก</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Modal: จัดการเวรประจำวัน -->
+<div id="dutyModal" class="modal-backdrop hidden">
+  <div class="modal modal-wide">
+    <h2 id="dutyModalTitle">เวรประจำวัน</h2>
+
+    <div class="duty-tabs">
+      <button class="duty-tab active" data-day="monday">จันทร์</button>
+      <button class="duty-tab" data-day="tuesday">อังคาร</button>
+      <button class="duty-tab" data-day="wednesday">พุธ</button>
+      <button class="duty-tab" data-day="thursday">พฤหัสฯ</button>
+      <button class="duty-tab" data-day="friday">ศุกร์</button>
+    </div>
+
+    <div id="dutyDayContent" class="duty-day-content"></div>
+
+    <form id="dutyAddForm" class="duty-add-form">
+      <input type="hidden" id="dutyRoomId" />
+      <input type="hidden" id="dutyAddDay" value="monday" />
+      <div class="duty-add-row">
+        <input type="text" id="dutyAddName" placeholder="ชื่อ-นามสกุล เช่น สมชาย ใจดี" />
+        <button type="submit" class="btn btn-primary">+ เพิ่ม</button>
+      </div>
+    </form>
+    <p class="hint">เพิ่มรายชื่อเวรสำหรับวันที่เลือกด้านบน เมื่อเพิ่มแล้วสมาชิกสามารถลงทะเบียนผ่าน LINE เพื่อผูกกับชื่อของตนได้</p>
+
+    <div class="modal-actions">
+      <button type="button" class="btn btn-ghost" id="closeDutyBtn">ปิด</button>
+    </div>
   </div>
 </div>
 
@@ -74,8 +105,7 @@
       <label>LIFF ID (สำหรับหน้าลงทะเบียนลูกค้า)
         <input type="text" id="liffId" placeholder="เช่น 1234567890-abcdefgh" />
       </label>
-      <p class="hint">ได้จาก LINE Developers Console &gt; channel ของคุณ &gt; แท็บ LIFF &gt; Add LIFF app
-        (ตั้ง Endpoint URL เป็น URL ของหน้านี้ + <code>/register.html</code>)</p>
+      <p class="hint">ได้จาก LINE Developers Console &gt; channel ของคุณ &gt; แท็บ LIFF &gt; Add LIFF app</p>
 
       <div class="settings-row">
         <label>แจ้งเตือนเมื่อเปิดไฟนานเกิน (นาที)
@@ -95,12 +125,12 @@
     <hr />
 
     <h3>ลิงก์ลงทะเบียนสำหรับลูกค้า</h3>
-    <p class="hint" id="registerLinkInfo">กรอก LIFF ID แล้วบันทึกก่อน จึงจะสร้างลิงก์ลงทะเบียนให้แต่ละห้องได้ (ดูปุ่ม 🔗 ที่การ์ดห้องแต่ละห้อง)</p>
+    <p class="hint" id="registerLinkInfo">กรอก LIFF ID แล้วบันทึกก่อน จึงจะสร้างลิงก์ลงทะเบียนให้แต่ละห้องได้</p>
 
     <hr />
 
     <h3>ผู้ทักแชทล่าสุด</h3>
-    <p class="hint">เมื่อลูกค้าทักแชทเข้า LINE OA ของคุณ ระบบจะบันทึก userId ไว้ที่นี่ ใช้คัดลอกไปกรอกตอนเพิ่ม/แก้ไขห้อง</p>
+    <p class="hint">เมื่อลูกค้าทักแชทเข้า LINE OA ของคุณ ระบบจะบันทึก userId ไว้ที่นี่</p>
     <div id="registrationsList" class="registrations-list"></div>
   </div>
 </div>
@@ -125,6 +155,7 @@
     </div>
     <div class="room-actions">
       <button class="btn btn-toggle">เปิดไฟ</button>
+      <button class="icon-btn duty-btn" title="จัดการเวรประจำวัน" aria-label="จัดการเวรประจำวัน">📋</button>
       <button class="icon-btn link-btn" title="คัดลอกลิงก์ลงทะเบียน" aria-label="คัดลอกลิงก์ลงทะเบียน">🔗</button>
       <button class="icon-btn edit-btn" title="แก้ไข" aria-label="แก้ไข">✎</button>
       <button class="icon-btn delete-btn" title="ลบ" aria-label="ลบ">✕</button>
