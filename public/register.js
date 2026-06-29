@@ -199,7 +199,8 @@ document.getElementById('dutySubmitBtn').addEventListener('click', async () => {
     const payload = {
       code: selectedRoom.code,
       lineUserId: lineProfile.userId,
-      displayName: fullName,   // ใช้ชื่อที่กรอกเอง แทน LINE display name
+      displayName: fullName,
+      lineDisplayName: lineProfile.displayName || '',
       role: selectedRole,
     };
     if (selectedEntryId) {

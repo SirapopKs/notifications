@@ -387,6 +387,7 @@ body {
 }
 
 .duty-name { font-size: 14px; font-weight: 600; }
+.duty-line-name { font-size: 12px; font-weight: 400; color: var(--text-dim); }
 
 .duty-role {
   font-size: 11px;

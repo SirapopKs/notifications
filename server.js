@@ -285,6 +285,7 @@ app.post('/api/register', async (req, res) => {
   if (!room.dutyRoster) room.dutyRoster = [];
 
   const cleanRole = role === 'teacher' ? 'teacher' : 'student';
+  const cleanLineDisplayName = (req.body.lineDisplayName || '').trim();
 
   if (dutyEntryId) {
     // ผูก LINE กับรายชื่อที่ admin กรอกไว้
@@ -292,7 +293,8 @@ app.post('/api/register', async (req, res) => {
     if (entry) {
       entry.lineUserId = lineUserId;
       entry.role = cleanRole;
-      entry.displayName = displayName || '';
+      entry.name = displayName || entry.name;
+      entry.lineDisplayName = cleanLineDisplayName;
     }
   } else if (Array.isArray(dutyDays) && dutyDays.length > 0) {
     // สร้างรายการเวรใหม่สำหรับแต่ละวันที่เลือก
@@ -305,7 +307,7 @@ app.post('/api/register', async (req, res) => {
         day,
         lineUserId,
         role: cleanRole,
-        displayName: displayName || '',
+        lineDisplayName: cleanLineDisplayName,
       });
     }
   }
